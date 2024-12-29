@@ -10,7 +10,10 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
       - name: Checkout code
@@ -19,7 +22,8 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
-          java-version: '11'
+          java-version: '11'  # Замените на нужную версию JDK
+          distribution: 'adopt'
 
       - name: Build with Maven
         run: mvn clean install
@@ -30,25 +34,12 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && success()
+    if: github.ref == 'refs/heads/main' && success() # Deploy only if it's the main branch and the build succeeded
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Authenticate to Heroku
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}  # Используем секреты GitHub для хранения Heroku API Key
+      - name: Deploy to Remote Server
         run: |
-          echo "machine api.heroku.com" >> ~/.netrc
-          echo "  login your-email@example.com" >> ~/.netrc
-          echo "  password $HEROKU_API_KEY" >> ~/.netrc
-          echo "machine git.heroku.com" >> ~/.netrc
-          echo "  login your-email@example.com" >> ~/.netrc
-          echo "  password $HEROKU_API_KEY" >> ~/.netrc
-          chmod 600 ~/.netrc
-
-      - name: Deploy to Heroku
-        run: |
-          git remote add heroku https://git.heroku.com/your-heroku-app.git
-          git push heroku main
+          ssh user@your-server "cd /path/to/your/app && git pull && mvn clean install && java -jar your-app.jar"

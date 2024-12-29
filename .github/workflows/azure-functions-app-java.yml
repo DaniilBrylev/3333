@@ -14,24 +14,22 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-  
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Go
-        uses: actions/setup-go@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v2
         with:
-          go-version: '1.18' 
+          java-version: '11'  # Замените на нужную версию JDK
+          distribution: 'adopt'
 
-      - name: Install dependencies
-        run: go mod tidy
-
-      - name: Build
-        run: go build .
+      - name: Build with Maven
+        run: mvn clean install
 
       - name: Run tests
-        run: go test ./...
+        run: mvn test
 
   deploy:
     needs: build
@@ -44,4 +42,4 @@ jobs:
 
       - name: Deploy to Remote Server
         run: |
-          ssh user@your-server "cd /path/to/your/app && git pull && go build . && ./your-app"
+          ssh user@your-server "cd /path/to/your/app && git pull && mvn clean install && java -jar your-app.jar"
